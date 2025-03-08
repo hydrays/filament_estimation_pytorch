@@ -34,7 +34,8 @@ def main():
         num_iterations=1000
     )
     
-    x0 = torch.tensor([-1.4333,    1.2356,    3.1422, -1.4489,    1.2133, -1.4733,    1.1400,    2.9956])
+    x0 = torch.tensor([-1.4222,    1.2378,    3.1333,   -1.4644,    1.1622,   -1.4644,    1.1511,    2.9600])
+    #x0 = torch.tensor([-1.4333,    1.2356,    3.1422, -1.4489,    1.2133, -1.4733,    1.1400,    2.9956])
     x_est, loss = estimator.estimate(x0)  # 不再需要传递mask_dir
     print(f"Optimized loss: {loss:.8f} Best_params: {[f'{p.item():.4f}' for p in x_est.data.cpu().numpy()]}")
 
