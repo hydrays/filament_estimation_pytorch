@@ -79,13 +79,34 @@ def synthetic_generate_masks(
         radial_distortion=[camera['params'][3], camera['params'][3]]
     )
 
-    # 构造控制点 (参数格式需要调整为[N, 3])
-    coords = torch.stack([
-        curve_params[0:3],
-        torch.stack([curve_params[3], curve_params[4], (curve_params[2] + curve_params[7])/2]),
-        curve_params[5:8]
-    ]).to(device)
-    
+    # # 构造控制点 (参数格式需要调整为[N, 3])
+    # n_points = (len(curve_params) - 2)/2
+    # z_start = curve_params[2]
+    # z_end = curve_params[-1]
+    # z_intp = torch.linspace(z_start, z_end, n_points, device=device)
+    # coords = torch.stack([
+    #     curve_params[0:3],
+    #     torch.stack([curve_params[3], curve_params[4], (curve_params[2] + curve_params[7])/2]),
+    #     curve_params[5:8]
+    # ]).to(device)
+
+    # 构造控制点，调整为[N, 3]格式
+    n_points = (len(curve_params) - 2) // 2
+    z_start = curve_params[2]
+    z_end = curve_params[-1]
+    z_intp = torch.linspace(z_start, z_end, n_points, device=device)
+
+    # 生成x和y的索引列表
+    x_indices = [0] + [3 + 2 * (i - 1) for i in range(1, n_points)]
+    y_indices = [1] + [4 + 2 * (i - 1) for i in range(1, n_points)]
+
+    # 提取x和y的值
+    x = curve_params[x_indices]
+    y = curve_params[y_indices]
+
+    # 组合成控制点坐标
+    coords = torch.stack([x, y, z_intp], dim=1)
+
     # 创建三次样条
     t_controls = torch.linspace(0, 1, len(coords), device=device)  # 控制点参数
     coeffs = torchcubicspline.natural_cubic_spline_coeffs(t_controls, coords)

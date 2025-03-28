@@ -67,15 +67,32 @@ class FilamentEstimator:
             target = self.masks[img_id]
             width, height = self.intrinsics.image_size[::-1]
             
-            # 曲线生成
-            coords = torch.stack([
-                x[0:3],
-                torch.stack([x[3], x[4], (x[2] + x[7])/2]),
-                x[5:8]
-            ])
-            
+            # # 曲线生成
+            # coords = torch.stack([
+            #     x[0:3],
+            #     torch.stack([x[3], x[4], (x[2] + x[7])/2]),
+            #     x[5:8]
+            # ])
+
+            # 构造控制点，调整为[N, 3]格式
+            n_points = (len(x) - 2) // 2
+            z_start = x[2]
+            z_end = x[-1]
+            z_intp = torch.linspace(z_start, z_end, n_points, device=self.device)
+
+            # 生成x和y的索引列表
+            x_indices = [0] + [3 + 2 * (i - 1) for i in range(1, n_points)]
+            y_indices = [1] + [4 + 2 * (i - 1) for i in range(1, n_points)]
+
+            # 提取x和y的值
+            xcoords = x[x_indices]
+            ycoords = x[y_indices]
+
+            # 组合成控制点坐标
+            coords = torch.stack([xcoords, ycoords, z_intp], dim=1)
+                        
             # 评估点
-            t_controls = torch.linspace(0, 1, 3, device=self.device)
+            t_controls = torch.linspace(0, 1, len(coords), device=self.device)
             coeffs = torchcubicspline.natural_cubic_spline_coeffs(t_controls, coords)
             spline = torchcubicspline.NaturalCubicSpline(coeffs)
             t_eval = torch.linspace(0, 1, 100, device=self.device)
